@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="100%" height="100%" creationComplete="init(event)" xmlns:components="com.xazc.components.*">
+	<fx:Metadata>
+		[ResourceBundle("LotteryPlayNames")]
+	</fx:Metadata>
+	<fx:Script>
+		<![CDATA[
+			import com.xazc.comm.ServerTool;
+			import com.xazc.comm.ServerToolImpl;
+			import com.xazc.event.CustomEvent;
+			import com.xazc.single.CurrentUserInfo;
+			import com.xazc.single.PlaytypeAndPlaynameBase;
+			import com.xazc.single.Util;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.resources.ResourceManager;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable]
+			private var isOpen:Boolean = false;//是否开启自动投注;
+			
+			private var List_betRecord:ArrayCollection = new ArrayCollection();
+			
+			private var myXML:XML; 
+			var loader:URLLoader = new URLLoader();   
+			var request:URLRequest = new URLRequest("betRecordList.xml"); 
+			protected function init(event:FlexEvent):void
+			{
+				Util.getInstance().addEventListener(CustomEvent.ADDUSERNAME_MSSAGE,zidong_bet_Handler);
+				
+				//初始化方案选择:
+				for(var i:int=0;i<CurrentUserInfo.plantDetailArrayList.length;i++){
+					var item:CheckBox= new CheckBox();
+					item.label = "方案" + (i+1);
+					item.selected = false;
+					plantSelected_group.addElement(item);
+				}
+				
+//				loader.load(request);   
+//				loader.addEventListener(Event.COMPLETE, onComplete);   
+			}
+			function onComplete(event:Event):void   
+			{   
+				var loader:URLLoader = event.target as URLLoader;   
+				if (loader != null)   
+				{   
+					myXML = new XML(loader.data);   
+				}      
+				
+				//添加元素/节点
+//				myXML.appendChild(<book name="java tutorial"> <price>60</price> <author>fdfgsd</author> </book>); 
+//				delete myXML.book[1];
+				trace(myXML.toXMLString());  
+			}   
+			
+			public function zidong_bet_Handler(event:CustomEvent):void
+			{
+				Bet_Handler();
+			}
+			
+			[Bindable]
+			public var betShare:SharedObject = null;  
+			
+			//投注对象；
+			public var betMessage:Object = new Object();
+			//存储最新对象；
+			public var betListNewObj:Object = new Object();
+			//存储最新最全对象；
+			public var betList:ArrayCollection = new ArrayCollection();
+			
+			protected function start_Bet_clickHandler(event:MouseEvent):void
+			{
+				if(isOpen){
+					isOpen = false;
+				}else{
+					isOpen = true;
+				}
+				
+				Bet_Handler();
+			}
+			
+			protected function Bet_Handler():void
+			{
+				if(!isOpen){
+					return;
+				}
+				
+				betList = new ArrayCollection();
+				var Bet:Array = new Array();
+				var obj:Object = new Object();
+				for(var i:int=0;i<plantSelected_group.numElements;i++){
+					if((plantSelected_group.getElementAt(i) as CheckBox).selected == true)
+					{
+						var tag:Object = new Object()
+						tag = CurrentUserInfo.plantDetailArrayList[i];
+						
+						
+						//*************************************************************************************************//
+						//@@@@@   投注内容 处理；开始
+						if(tag.plantType=="0" || tag.plantType=="3" || tag.plantType=="2"){//方案编号；随机出号-0  定码出号-3 冷热温出号-2
+							var betArr:Array = tag.betContent.toString().split("#");
+							for(var j:int=0;j<betArr.length;j++){
+								obj = new Object();
+								obj.BetRebate = CurrentUserInfo.MyRebate;
+								obj.IssueNumber = CurrentUserInfo.IssueNumber;
+								
+								//计算注数；
+								if(tag.wanfa.toString().split("_")[0] == "10"){
+									//一星定位胆特殊处理；
+									obj.BetCount = tag.zhushu;
+								}else if(tag.wanfa.toString().split("_")[0] == "05" || tag.wanfa.toString().split("_")[0] == "14" || tag.wanfa.toString().split("_")[0] == "27"){
+									//后三.中三.前三---组三复式特殊处理；
+									obj.BetCount = 2;
+								}else if(tag.wanfa == "37_0"){//任二复式特殊处理；
+									var myPattern:RegExp = /\|/g; 
+									var myPattern_1:RegExp = /\*/g;
+									var str:String = betArr[j];
+									str = str.replace(myPattern,"");
+									str = str.replace(myPattern_1,"");
+									if(str.length == 2)obj.BetCount = 1;
+									if(str.length == 3)obj.BetCount = 3;
+									if(str.length == 4)obj.BetCount = 6;
+									if(str.length == 5)obj.BetCount = 10;
+								}else if(tag.wanfa == "37_3"){//任二单式特殊处理；
+									var str:String = betArr[j];
+									str = str.split("$")[1];
+									if(str.length == 2)obj.BetCount = 1;
+									if(str.length == 3)obj.BetCount = 3;
+									if(str.length == 4)obj.BetCount = 6;
+									if(str.length == 5)obj.BetCount = 10;
+								}else if(tag.wanfa == "65_0"){//任四复式特殊处理；
+									var myPattern:RegExp = /\|/g; 
+									var myPattern_1:RegExp = /\*/g;
+									var str:String = betArr[j];
+									str = str.replace(myPattern,"");
+									str = str.replace(myPattern_1,"");
+									if(str.length == 4)obj.BetCount = 1;
+									if(str.length == 5)obj.BetCount = 5;
+								}else if(tag.wanfa == "65_3"){//任四单式特殊处理；
+									var str:String = betArr[j];
+									str = str.split("$")[1];
+									if(str.length == 4)obj.BetCount = 1;
+									if(str.length == 5)obj.BetCount = 5;
+								}else if(tag.wanfa == "38_0"){//任三复式特殊处理；
+									var myPattern:RegExp = /\|/g; 
+									var myPattern_1:RegExp = /\*/g;
+									var str:String = betArr[j];
+									str = str.replace(myPattern,"");
+									str = str.replace(myPattern_1,"");
+									if(str.length == 3)obj.BetCount = 1;
+									if(str.length == 4)obj.BetCount = 4;
+									if(str.length == 5)obj.BetCount = 10;
+								}else if(tag.wanfa == "38_3"){//任三单式特殊处理；
+									var str:String = betArr[j];
+									str = str.split("$")[1];
+									if(str.length == 3)obj.BetCount = 1;
+									if(str.length == 4)obj.BetCount = 4;
+									if(str.length == 5)obj.BetCount = 10;
+								}else{
+									obj.BetCount = 1;
+								}
+								
+								obj.BetContent = betArr[j];
+								obj.BetMultiple = 1;
+								obj.BetMoney = 2*obj.BetCount*obj.BetMultiple*( tag.moshi==0?1:(tag.moshi==1?0.1:0.01) );
+								obj.BetMoney = Number((Number(obj.BetMoney)).toFixed(6));
+								obj.PlayCode = CurrentUserInfo.lottreyID + tag.wanfa.toString().split("_")[0];
+								obj.BetMode = tag.mode;
+								Bet.push(obj);
+							}
+						}
+						//@@@@@   随机出号  投注内容 处理；结束
+						//*************************************************************************************************//
+						//*************************************************************************************************//
+						//@@@@@   开某投某  投注内容 处理；开始
+						if(tag.plantType=="1"){//方案编号；开某投某-1
+							obj = new Object();
+							
+							//根据  方案指定的位数  在上期开奖结果对应的位数上的值 是否与方案的选择结果是否一致；一致投注，不一致不投注；
+//							obj.BetContent = betArr[j];
+							
+							var last_result:Array = CurrentUserInfo.Last_result.split(",");//上期开奖结果；
+							var plant_special_value:int = last_result[tag.playName];//方案的玩法名称对应的位数   01234-万千百十个；
+							var str_result:String;
+							if(tag.result_isSelected[plant_special_value] == "1"){//是否对应的结果在方案里面选中；
+								if(tag.touzhu_mode == 0){//正投
+									str_result = PlaytypeAndPlaynameBase.betType[plant_special_value].zhengContent;
+								}else{
+									str_result = PlaytypeAndPlaynameBase.betType[plant_special_value].fanContent;}
+							}else{
+								break;
+							}
+							//根据位数  拼接投注内容；
+							if(tag.playName == 0)obj.BetContent = tag.showContent = str_result + "|*|*|*|*";
+							if(tag.playName == 1)obj.BetContent = tag.showContent = "*|" + str_result + "|*|*|*";
+							if(tag.playName == 2)obj.BetContent = tag.showContent = "*|*|" + str_result + "|*|*";
+							if(tag.playName == 3)obj.BetContent = tag.showContent = "*|*|*|" + str_result + "|*";
+							if(tag.playName == 4)obj.BetContent = tag.showContent = "*|*|*|*|" + str_result;
+							
+							obj.BetRebate = CurrentUserInfo.MyRebate;
+							obj.IssueNumber = CurrentUserInfo.IssueNumber;
+							obj.BetCount = tag.zhushu;
+							obj.BetMultiple = 1;
+							obj.BetMoney = 2*obj.BetCount*obj.BetMultiple*( tag.moshi==0?1:(tag.moshi==1?0.1:0.01) );
+							obj.BetMoney = Number((Number(obj.BetMoney)).toFixed(6));
+							obj.PlayCode = CurrentUserInfo.lottreyID + tag.wanfa.toString().split("_")[0];
+							obj.BetMode = tag.mode;
+							Bet.push(obj);
+						}
+						//@@@@@   开某投某  投注内容 处理；结束
+						//*************************************************************************************************//
+						
+						
+						//存储最新最全对象；
+						betListNewObj = new Object();
+						betListNewObj.IssueNumber = CurrentUserInfo.IssueNumber;
+						betListNewObj.PlayCode = tag.wanfa;
+						betListNewObj.BetMode = tag.mode;
+						betListNewObj.BetContent = tag.showContent;
+						betListNewObj.BetCount = tag.zhushu;
+						betListNewObj.BetMultiple = 1;
+						betListNewObj.BetMoney = 2*betListNewObj.BetCount*betListNewObj.BetMultiple*( tag.moshi==0?1:(tag.moshi==1?0.1:0.01) );
+						betListNewObj.BetMoney = Number((Number(betListNewObj.BetMoney)).toFixed(6));
+						betListNewObj.PlantName = "方案"+ (i+1);
+						betListNewObj.LottreyName = CurrentUserInfo.lottreyName;
+						betList.addItem(betListNewObj);
+					}
+				}
+				var UserBetInfo:Object = new Object();
+				UserBetInfo.Bet = Bet;
+				UserBetInfo.IssueNumber = CurrentUserInfo.IssueNumber;
+				UserBetInfo.LotteryCode = CurrentUserInfo.lottreyID;
+				betMessage = new Object();
+				betMessage.UserBetInfo = UserBetInfo
+				
+				var serverTool:ServerTool = new ServerToolImpl();
+				serverTool.userBet(betMessage,bettingNowReturn);
+			}
+			private function bettingNowReturn(e:ResultEvent):void
+			{
+				var arr:Object = Util.getInstance().resuleFormatToJSon(e.result.toString(),1);
+				trace(e.result.toString());
+				if(arr.state){
+					bet_staues.text = "投注成功！";
+					//添加最新投注成功的数据；
+					for(var i:int=0;i<betList.length;i++){
+						var item :Object = new Object();
+						item.Time = df.format(new Date());
+						item.IssueNumber = betList[i].IssueNumber;
+						item.BetMode = betList[i].BetMode;
+						item.PlayCode = betList[i].PlayCode;
+						
+						item.BetContent = betList[i].BetContent;
+						item.BetCount = betList[i].BetCount;
+						item.BetMultiple = betList[i].BetMultiple;
+						item.BetMoney = betList[i].BetMoney;
+						item.PlantName = betList[i].PlantName;
+						item.LottreyName = betList[i].LottreyName;
+						List_betRecord.addItem(item);
+					}
+					
+					if(del_Selected.selected && List_betRecord.length > int(del_Num.text)){
+						var newList_betRecord:ArrayCollection = new ArrayCollection();
+						for(var i:int=(List_betRecord.length - int(del_Num.text));i<List_betRecord.length;i++)
+						{newList_betRecord.addItem(List_betRecord[i]);}
+						List_betRecord = new ArrayCollection();
+						List_betRecord = newList_betRecord;
+					}
+					
+					//数组的元素的顺序进行反转
+					var fan_arr:ArrayCollection = new ArrayCollection();
+//					fan_arr = List_betRecord;
+					for (var i = 0; i < List_betRecord.length; i++) {
+						
+						var obj:Object = List_betRecord[List_betRecord.length - i - 1];
+						fan_arr.addItem(obj);
+					}
+					bet_record_list.updateViewPropertysValue(fan_arr);
+					return;
+				}else{
+//					Alert.show(arr.mark, "温馨提示");
+					bet_staues.text = arr.mark;
+					return;
+				}
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<mx:DateFormatter id="df" formatString="MM-DD JJ:NN:SS"/>
+	</fx:Declarations>
+	
+	
+	<s:VGroup width="100%" height="100%" left="5" right="5" top="5" bottom="5">
+		
+		<!-- 设置-->
+		<s:BorderContainer width="100%" height="70"  borderColor="0x000000" borderWeight="1">
+			<s:HGroup width="100%" height="100%" verticalAlign="middle" left="5">
+				<s:Button label="{isOpen?'关闭自动投注':'开启自动投注'}" click="start_Bet_clickHandler(event)"/>
+			</s:HGroup>	
+		</s:BorderContainer>
+		
+		<!-- 方案选择-->
+		<s:BorderContainer width="100%" height="35"  borderColor="0x000000" borderWeight="1">
+			<s:HGroup width="100%" height="100%" verticalAlign="middle" left="5">
+				<s:Label text="方案选择:" />
+				<s:HGroup id="plantSelected_group">
+				</s:HGroup>
+			</s:HGroup>	
+		</s:BorderContainer>
+		
+		<!-- 投注详情-->
+		<s:BorderContainer width="100%" height="505"  borderColor="0x000000" borderWeight="0">
+			<s:VGroup width="100%" height="100%" gap="-1">
+				<s:BorderContainer width="100%" height="60"  borderColor="0x000000" borderWeight="1">
+					<s:VGroup width="100%" height="100%" gap="0" left="5">
+						<s:HGroup width="100%" height="30" verticalAlign="middle" gap="0">
+							<s:HGroup width="134" verticalAlign="middle" gap="0">
+								<s:Label text="真是盈亏:"/>
+								<s:Label text="0.00"/>
+							</s:HGroup>
+							<s:HGroup width="134">
+								<s:Label text="真是下注:"/>
+								<s:Label text="0.00"/>
+							</s:HGroup>
+							<s:HGroup width="134">
+								<s:Label text="模拟盈亏:"/>
+								<s:Label text="0.00"/>
+							</s:HGroup>
+							<s:HGroup width="134">
+								<s:Label text="模拟下注:"/>
+								<s:Label text="0.00"/>
+							</s:HGroup>
+							<s:HGroup width="134">
+								<s:Label text="最大连中:"/>
+								<s:Label text="0"/>
+							</s:HGroup>
+							<s:HGroup width="134">
+								<s:Label text="最大连挂:"/>
+								<s:Label text="0"/>
+							</s:HGroup>
+							<s:HGroup width="134">
+								<s:Label text="准确率:"/>
+								<s:Label text="0.00%"/>
+							</s:HGroup>
+						</s:HGroup>
+						<s:HGroup width="100%" height="30"  verticalAlign="middle" gap="0">
+							<s:HGroup width="134">
+								<s:Label text="投注记录:"/>
+								<s:Label text="00/00期"/>
+							</s:HGroup>
+							<s:HGroup width="134">
+								<s:Label text="投注状态:"/>
+								<s:Label text="" id="bet_staues" color="0xff0000"/>
+							</s:HGroup>
+						</s:HGroup>
+					</s:VGroup>
+				</s:BorderContainer>
+				<s:BorderContainer width="100%" height="100%"  borderColor="0x000000" borderWeight="1">
+					<components:view_bet_list id="bet_record_list"/>
+				</s:BorderContainer>
+				
+				<s:HGroup height="30" verticalAlign="middle" left="5">
+					<s:Spacer width="5" />
+					<s:CheckBox id="del_Selected" selected="false" label="自动删除N期前的数据：" />
+					<s:TextInput id="del_Num" width="63" maxChars="3" restrict="0-9" text="10"/>
+				</s:HGroup>
+				
+			</s:VGroup>
+		</s:BorderContainer>
+		
+	</s:VGroup>
+	
+</mx:Canvas>

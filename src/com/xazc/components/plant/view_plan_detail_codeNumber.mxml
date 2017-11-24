@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="495" height="600" creationComplete="init(event)">
+	<fx:Script>
+		<![CDATA[
+			import com.xazc.single.CurrentUserInfo;
+			import com.xazc.single.PlaytypeAndPlaynameBase;
+			import com.xazc.single.Util;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.DynamicEvent;
+			import mx.events.FlexEvent;
+			import mx.events.IndexChangedEvent;
+			
+			import spark.events.IndexChangeEvent;
+			import spark.events.TextOperationEvent;
+			
+			public var plantNum:int;
+			
+			[Bindable]
+			private var provinces:ArrayCollection;//玩法
+			[Bindable]
+			private var citys:ArrayCollection;
+			
+			private var temp:Object = new Object();//随机模板投注对象；
+			
+			protected function init(event:FlexEvent):void
+			{
+				
+			}
+			
+			public function init_view(type:int):void
+			{
+				var tag:Object = new Object();
+				if(type == 0)tag = CurrentUserInfo.plantDetailArrayList[plantNum];
+				if(type == 1)tag = CurrentUserInfo.plantDetailArrayList_default[3];
+				
+				//初始化信息
+				var obj:Object=JSON.parse(PlaytypeAndPlaynameBase.provinceCity,null);
+				provinces= new ArrayCollection(obj as Array);
+				cb_province.dataProvider=provinces;
+				cb_province.selectedIndex=tag.playType;//玩法类型：
+				var objcity:Object=cb_province.selectedItem.city;
+				citys=new ArrayCollection(objcity as Array);
+				cb_city.dataProvider=citys;
+				cb_city.selectedIndex=tag.playName;//玩法名称：
+				
+				//从方案初始化信息
+				plantName.text = "方案" +  (plantNum+1);//方案名称：
+				plantType.selectedIndex = tag.plantType;//方案类别：
+				
+				Zhushu_info.text = tag.zhushu;//注数：
+				Content.text = tag.showContent;//内容；
+				
+				cb_province.selectedIndex = tag.playType;//玩法类型：
+				cb_city.selectedIndex=tag.playName;//玩法名称：
+				jine_mode.selectedIndex = tag.moshi;//金额模式：
+				
+				muilt.text = tag.beishu;//直线倍投：
+				
+				//输入的格式提示信息；
+				eg_tips.text = citys[cb_city.selectedIndex].tip.toString();
+				
+				temp.saveBoolean = "1";
+				
+				//位数组件；
+				if(provinces[cb_province.selectedIndex].text == "任二" || provinces[cb_province.selectedIndex].text == "任三" || provinces[cb_province.selectedIndex].text == "任四"){
+					if(citys[cb_city.selectedIndex].id.toString().split("_")[1] == "3"){//单式
+						random_group.visible = true;
+						random_group.includeInLayout = true;
+						
+						//根据保存的方案初始化位数组件；
+						for(var i:int=1;i<6;i++){
+							this["weishu_"+i].selected = false;
+						}
+						var weishu_showArr:Array = ((tag.betContent.split("#")[0].toString()).split("$")[1].toString()).split("");//根据方案里面保存的要发送的投注对象，取其第一组投注内容，再取其后面的位置；
+						for(var i:int=0;i<weishu_showArr.length;i++){
+							if(weishu_showArr[i] == 0)weishu_5.selected = true;
+							if(weishu_showArr[i] == 1)weishu_4.selected = true;
+							if(weishu_showArr[i] == 2)weishu_3.selected = true;
+							if(weishu_showArr[i] == 3)weishu_2.selected = true;
+							if(weishu_showArr[i] == 4)weishu_1.selected = true;
+						}
+					}
+					if(citys[cb_city.selectedIndex].id.toString().split("_")[1] == "0"){//复式
+						random_group.visible = true;
+						random_group.includeInLayout = true;
+						
+						//根据保存的方案初始化位数组件；
+						for(var i:int=1;i<6;i++){
+							this["weishu_"+i].selected = false;
+						}
+						var myPattern_1:RegExp = /\|/g; 
+						var weishu_showArr:Array = ((tag.betContent.split("#")[0].toString()).replace(myPattern_1,"")).split("");//根据保存的显示投注内容对象，取其第一组，就可以看出是哪些位置在投注；
+						for(var i:int=0;i<weishu_showArr.length;i++){
+							if(i==0 && weishu_showArr[i] != "*")weishu_5.selected = true;
+							if(i==1 && weishu_showArr[i] != "*")weishu_4.selected = true;
+							if(i==2 && weishu_showArr[i] != "*")weishu_3.selected = true;
+							if(i==3 && weishu_showArr[i] != "*")weishu_2.selected = true;
+							if(i==4 && weishu_showArr[i] != "*")weishu_1.selected = true;
+						}
+					}
+				}else{
+					random_group.visible = false;
+					random_group.includeInLayout = false;
+				}
+			}
+			
+			protected function cb_province_changeHandler(event:IndexChangeEvent):void
+			{
+				var obj:Array=cb_province.selectedItem.city as Array;
+				citys=new ArrayCollection(obj);
+				cb_city.selectedIndex=0;
+				init_weishu();
+				if(provinces[cb_province.selectedIndex].text == "任二"){
+					if(citys[cb_city.selectedIndex].id.toString().split("_")[1] == "3" || citys[cb_city.selectedIndex].id.toString().split("_")[1] == "0"){
+						random_group.visible = true;
+						random_group.includeInLayout = true;
+						weishu_5.selected = false;
+						weishu_4.selected = false;
+						weishu_3.selected = false;
+					}
+				}else if(provinces[cb_province.selectedIndex].text == "任三"){
+					if(citys[cb_city.selectedIndex].id.toString().split("_")[1] == "3" || citys[cb_city.selectedIndex].id.toString().split("_")[1] == "0"){
+						random_group.visible = true;
+						random_group.includeInLayout = true;
+						weishu_5.selected = false;
+						weishu_4.selected = false;
+					}
+				}else if(provinces[cb_province.selectedIndex].text == "任四"){
+					if(citys[cb_city.selectedIndex].id.toString().split("_")[1] == "3" || citys[cb_city.selectedIndex].id.toString().split("_")[1] == "0"){
+						random_group.visible = true;
+						random_group.includeInLayout = true;
+						weishu_5.selected = false;
+					}
+				}else{
+					random_group.visible = false;
+					random_group.includeInLayout = false;
+				}
+				
+				Content.text = "";//内容；
+				Zhushu_info.text = "0";//注数
+				eg_tips.text = citys[cb_city.selectedIndex].tip.toString();
+				temp.saveBoolean = "0";
+			}
+			protected function cb_city_changeHandler(event:IndexChangeEvent):void
+			{
+				init_weishu();
+				if(provinces[cb_province.selectedIndex].text == "任二"){
+					if(citys[cb_city.selectedIndex].id.toString().split("_")[1] == "3" || citys[cb_city.selectedIndex].id.toString().split("_")[1] == "0"){
+						random_group.visible = true;
+						random_group.includeInLayout = true;
+						weishu_5.selected = false;
+						weishu_4.selected = false;
+						weishu_3.selected = false;
+					}
+				}
+				if(provinces[cb_province.selectedIndex].text == "任三"){
+					if(citys[cb_city.selectedIndex].id.toString().split("_")[1] == "3" || citys[cb_city.selectedIndex].id.toString().split("_")[1] == "0"){
+						random_group.visible = true;
+						random_group.includeInLayout = true;
+						weishu_5.selected = false;
+						weishu_4.selected = false;
+					}
+				}
+				if(provinces[cb_province.selectedIndex].text == "任四"){
+					if(citys[cb_city.selectedIndex].id.toString().split("_")[1] == "3" || citys[cb_city.selectedIndex].id.toString().split("_")[1] == "0"){
+						random_group.visible = true;
+						random_group.includeInLayout = true;
+						weishu_5.selected = false;
+					}
+				}
+				
+				Content.text = "";//内容；
+				Zhushu_info.text = "0";//注数
+				eg_tips.text = citys[cb_city.selectedIndex].tip.toString();
+				temp.saveBoolean = "0";
+			}
+			
+			//保存方案；
+			protected function savePlant_clickHandler(event:MouseEvent):void
+			{
+				if(temp.saveBoolean == "0"){
+					return;
+				}
+				var tag:Object = CurrentUserInfo.plantDetailArrayList[plantNum];
+				
+				tag.plantType = plantType.selectedIndex;//方案类别：
+				
+				tag.zhushu = Zhushu_info.text;//注数：
+				tag.betContent = temp.betContent;//内容；
+				tag.showContent = temp.content;//内容；
+				
+				tag.playType = cb_province.selectedIndex;//玩法类型：
+				tag.playName = cb_city.selectedIndex;//玩法名称：
+				tag.beishu = muilt.text ;//直线倍投：
+				tag.moshi = jine_mode.selectedIndex;//金额模式：
+				
+				//胆拖：
+				tag.mode = citys[cb_city.selectedIndex].text == "直选单式"?8:0;
+				tag.wanfa =  citys[cb_city.selectedIndex].id;
+				
+				//传递并保存 方案信息；
+				var evt:DynamicEvent=new DynamicEvent("submitClickEvent");
+				evt.name = plantNum;//方案index;
+				evt.planttype = plantType.textInput.text; //玩法类别；
+				evt.palytype =  cb_city.textInput.text +"【"+ cb_province.textInput.text + "】";   //玩法名称；
+				evt.value = CurrentUserInfo.plantType[plantType.selectedIndex].value;
+				dispatchEvent(evt);
+			}
+			//放弃方案；
+			protected function forgoPlant_clickHandler(event:MouseEvent):void
+			{
+				//传递放弃方案
+				var evt:DynamicEvent=new DynamicEvent("forgoClickEvent");
+				dispatchEvent(evt);
+			}
+			
+			//位数变化，生成对应格式的内容
+			protected function weishu_changeHandler(event:Event):void
+			{
+				//任二 任三 任四 传递特殊参数，生成内容；
+				var n:int=0;
+				for(var i:int=1;i<6;i++){
+					if(this["weishu_"+i].selected == true)n++;
+				}
+				if(provinces[cb_province.selectedIndex].text == "任二" && citys[cb_city.selectedIndex].id.toString().split("_")[1] == "0" ){
+					if(n==2)eg_tips.text = "12";
+					if(n==3)eg_tips.text = "123";
+					if(n==4)eg_tips.text = "1234";
+					if(n==5)eg_tips.text = "12345";
+					if(n<2){
+						eg_tips.text = "万千百十个最少选择2位";
+						return;
+					}
+				}
+				if(provinces[cb_province.selectedIndex].text == "任三" && citys[cb_city.selectedIndex].id.toString().split("_")[1] == "0" ){
+					if(n==3)eg_tips.text = "123";
+					if(n==4)eg_tips.text = "1234";
+					if(n==5)eg_tips.text = "12345";
+					if(n<3){
+						eg_tips.text = "万千百十个最少选择3位";
+						return;
+					}
+				}
+				if(provinces[cb_province.selectedIndex].text == "任四" && citys[cb_city.selectedIndex].id.toString().split("_")[1] == "0" ){
+					if(n==4)eg_tips.text = "1234";
+					if(n==5)eg_tips.text = "12345";
+					if(n<4){
+						eg_tips.text = "万千百十个最少选择4位";
+						return;
+					}
+				}
+					
+				check_Content()
+			}
+			//根据检验内容是否正确
+			private function check_Content():void
+			{
+				if(Content.text == "")return;
+				
+				//任二 任三 任四 传递特殊参数，生成内容；
+				if(provinces[cb_province.selectedIndex].text == "任二" || provinces[cb_province.selectedIndex].text == "任四" || provinces[cb_province.selectedIndex].text == "任三"){
+					var str:String = new String();
+					var num:int=0;
+					var obj:Object = new Object();
+					if(citys[cb_city.selectedIndex].id.toString().split("_")[1] == "0"){//复式
+						for(var i:int=5;i>0;i--){
+							if(i == 1)str += this["weishu_"+i].selected?'^':'*';
+							else str += this["weishu_"+i].selected?'^|':'*|';
+							if(this["weishu_"+i].selected)num++;}
+						obj.num=num;
+						obj.geshi=str;
+					}
+					if(citys[cb_city.selectedIndex].id.toString().split("_")[1] == "3"){//单式
+						for(var i:int=5;i>0;i--){
+							if(this["weishu_"+i].selected)
+							{
+								if(i == 5)str +="万";
+								if(i == 4)str +="千";
+								if(i == 3)str +="百";
+								if(i == 2)str +="十";
+								if(i == 1)str +="个";
+							}
+						}
+						obj.num=str.length;//根据位数，生成
+						obj.geshi=str;
+					}
+					temp = Util.getInstance().verify_BetContent(Content.text,citys[cb_city.selectedIndex].id,obj);
+				}else{//通用；
+					temp = Util.getInstance().verify_BetContent(Content.text,citys[cb_city.selectedIndex].id,"");
+				}
+				
+				Content.text = temp.content;//内容；
+				Zhushu_info.text = temp.zhushu.toString();//注数
+				
+			}
+			
+			//切换玩法，初始化；
+			public function init_weishu():void{
+				for(var i:int=1;i<6;i++){
+					this["weishu_"+i].selected = true;
+				}
+			}
+			
+			
+			//切换方案；
+			protected function plantType_changeHandler(event:IndexChangeEvent):void
+			{
+				//切换方案信息；
+				var evt:DynamicEvent=new DynamicEvent("changePlantEvent");
+				evt.changePlantValue = CurrentUserInfo.plantType[plantType.selectedIndex].value;//方案index;
+				evt.name = CurrentUserInfo.plantType[plantType.selectedIndex].type;//方案type;
+				evt.plantNum = plantNum;
+				dispatchEvent(evt);
+			}
+			
+			//输入框移出后，效验内容是否正确，并计算注数
+			protected function Content_rollOutHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				check_Content();
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Metadata>
+		[Event(name="submitClickEvent",type="mx.events.DynamicEvent")]
+		[Event(name="forgoClickEvent",type="mx.events.DynamicEvent")]
+		[Event(name="changePlantEvent",type="mx.events.DynamicEvent")]
+	</fx:Metadata>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:VGroup  width="100%" height="600" left="5" right="5" top="5" bottom="5">
+		<s:BorderContainer width="100%" height="40"  borderColor="0x000000" borderWeight="1">
+			<s:HGroup height="100%" verticalAlign="middle" left="5" right="5" top="5" bottom="5" gap="0">
+				<s:Label text="方案名称：" />
+				<s:TextInput width="83" editable="false" text="方案1" id="plantName"/>
+				<s:Spacer width="10" />
+				<s:Label text="类别：" />
+				<s:ComboBox width="95" id="plantType" initialize="plantType.textInput.editable = false" change="plantType_changeHandler(event)"
+							dataProvider="{CurrentUserInfo.plantType}" selectedIndex="0" labelField="type"/>
+				<s:Spacer y="14" width="60" height="2"/>
+				<s:Button width="45" label="保存" click="savePlant_clickHandler(event)"/>
+				<s:Spacer y="14" width="20" height="2"/>
+				<s:Button width="45" label="放弃" click="forgoPlant_clickHandler(event)"/>
+			</s:HGroup>
+		</s:BorderContainer>
+		
+		<s:VGroup height="100%" width="100%" left="5" right="5" top="5" bottom="5" gap="10">
+			<s:HGroup width="100%" height="30" verticalAlign="middle">
+				<s:Label text="随机出号" color="#9ec9fb"/>
+			</s:HGroup>
+			<s:HGroup width="100%" height="230" >
+				<s:BorderContainer width="280" height="100%"  borderColor="0x000000" borderWeight="1">
+					<s:VGroup width="100%" height="100%" left="5" right="5">
+						<s:HGroup>
+							<s:HGroup height="25" verticalAlign="middle">
+								<s:Label text="格式说明：" color="0xff0000"/>
+							</s:HGroup>
+							<s:VGroup gap="0">
+								<s:HGroup gap="0" height="25" verticalAlign="middle">
+									<s:Label text="1)"/>
+									<s:Label text="示例："/>
+									<s:Label id="eg_tips" color="0xff0000"/>
+									<s:Label text="；"/>
+								</s:HGroup>
+								<s:HGroup gap="0" height="25" verticalAlign="middle">
+									<s:Label text="2)"/>
+									<s:Label text="每注之间用空格分隔；"/>
+								</s:HGroup>
+							</s:VGroup>
+						</s:HGroup>
+						<s:TextArea width="100%" height="135" id="Content" restrict="0-9^|^ "
+									editable="true" rollOut="Content_rollOutHandler(event)"/>
+						<s:HGroup height="30" verticalAlign="middle">
+							<s:Label text="输入号码："/>
+							<s:Label text="0" id="Zhushu_info"/>
+							<s:Label text="注"/>
+						</s:HGroup>
+					</s:VGroup>
+				</s:BorderContainer>
+				<s:VGroup width="183" height="100%">
+					<s:HGroup height="30" verticalAlign="middle">
+						<s:Label text="玩法类型："/>
+						<s:ComboBox width="110" id="cb_province" initialize="cb_province.textInput.editable = false" 
+									dataProvider="{provinces}" selectedIndex="0" labelField="text" change="cb_province_changeHandler(event)"/>
+					</s:HGroup>
+					<s:HGroup height="30" verticalAlign="middle">
+						<s:Label text="玩法名称："/>
+						<s:ComboBox width="110" id="cb_city" initialize="cb_city.textInput.editable = false"
+									dataProvider="{citys}" selectedIndex="0" labelField="text" change="cb_city_changeHandler(event)"/>
+					</s:HGroup>
+					<s:HGroup height="30" verticalAlign="middle">
+						<s:Label text="金额模式："/>
+						<s:ComboBox width="110" id="jine_mode" initialize="jine_mode.textInput.editable = false"
+									dataProvider="{CurrentUserInfo.betType}" selectedIndex="0" labelField="type"/>
+					</s:HGroup>
+					<s:HGroup height="50" verticalAlign="middle" id="random_group" visible="false" includeInLayout="false">
+						<s:CheckBox label="万" id="weishu_5" selected="true" change="weishu_changeHandler(event)"/>
+						<s:CheckBox label="千" id="weishu_4" selected="true" change="weishu_changeHandler(event)"/>
+						<s:CheckBox label="百" id="weishu_3" selected="true" change="weishu_changeHandler(event)"/>
+						<s:CheckBox label="十" id="weishu_2" selected="true" change="weishu_changeHandler(event)"/>
+						<s:CheckBox label="个" id="weishu_1" selected="true" change="weishu_changeHandler(event)"/>
+					</s:HGroup>
+				</s:VGroup>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" height="90" visible="false" includeInLayout="false">
+				<s:Spacer width="1" />
+				<s:RadioButton label="直线倍投：" />
+				<s:TextArea width="183" height="85" id="muilt"/>
+			</s:HGroup>
+			
+		</s:VGroup>
+		
+	</s:VGroup>
+</s:Group>

@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="100%" height="100%"
+		 creationComplete="init(event)" xmlns:components="com.xazc.components.*" xmlns:plant="com.xazc.components.plant.*"
+		 >
+	<fx:Script>
+		<![CDATA[
+			import com.xazc.components.plant.view_plan_detail_open_X_bet_X;
+			import com.xazc.components.plant.view_plan_detail_randomNumber;
+			import com.xazc.single.CurrentUserInfo;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.DynamicEvent;
+			import mx.events.FlexEvent;
+			
+			protected function init(event:FlexEvent):void
+			{
+				//初始化页面
+				plan_group.removeAllElements();
+				for(var i:int;i<CurrentUserInfo.platTypeArrayList.length ;i++)
+				{
+					var item:view_plan_itemBase = new view_plan_itemBase();
+					item.isSlected = false;
+//					item.planName = CurrentUserInfo.platTypeArrayList[i].name;
+					item.planName = "方案" + (i+1).toString();
+					CurrentUserInfo.platTypeArrayList[i].name = item.planName;
+					item.planId = CurrentUserInfo.platTypeArrayList[i].type;
+					item.playType = CurrentUserInfo.platTypeArrayList[i].palytype;
+					item.id = "Id_" + i;
+					item.value = CurrentUserInfo.platTypeArrayList[i].value;
+					item.addEventListener(MouseEvent.CLICK,item_clickHandler);
+					plan_group.addElement(item);
+				}
+				//默认选择第一个；
+				(plan_group.getElementAt(0) as view_plan_itemBase).isSlected = true;
+				
+				plan_detail_1.plantNum = 0;
+				plan_detail_1.init_view(0);
+				mask_right.visible = true;
+				mask_right.includeInLayout = true;
+				
+			}
+			
+			private function item_clickHandler(event:MouseEvent):void
+			{
+				for(var i:int;i<CurrentUserInfo.platTypeArrayList.length ;i++)
+				{
+					(plan_group.getElementAt(i) as view_plan_itemBase).isSlected = false;
+				}
+				(event.currentTarget as view_plan_itemBase).isSlected = true;
+				//切换方案；
+				change_plant_view(((event.currentTarget as view_plan_itemBase).id),((event.currentTarget as view_plan_itemBase).value));
+			}
+			
+			private function change_plant_view(id:String,value:String):void
+			{
+				for(var i:int;i<plan_detail_group.numElements;i++){
+					this["plan_detail_"+(i+1)].visible = false;
+					this["plan_detail_"+(i+1)].includeInLayout = false;
+				}
+				
+				switch(value)
+				{
+					case "101":
+						plan_detail_1.plantNum = id.split("_")[1];
+						plan_detail_1.init_view(0);
+						
+						plan_detail_1.visible = true;
+						plan_detail_1.includeInLayout = true;
+						break;
+					case "102":
+						plan_detail_2.plantNum = id.split("_")[1];
+						plan_detail_2.init_view(0);
+						
+						plan_detail_2.visible = true;
+						plan_detail_2.includeInLayout = true;
+						break;
+					case "103":
+						plan_detail_3.plantNum = id.split("_")[1];
+						plan_detail_3.init_view(0);
+						
+						plan_detail_3.visible = true;
+						plan_detail_3.includeInLayout = true;
+						break;
+					case "104":
+						plan_detail_4.plantNum = id.split("_")[1];
+						plan_detail_4.init_view(0);
+						
+						plan_detail_4.visible = true;
+						plan_detail_4.includeInLayout = true;
+						break;
+				}
+			}
+			
+			protected function submitClickEventHandler(event:DynamicEvent):void
+			{
+				var tag:Object = CurrentUserInfo.platTypeArrayList[event.name];
+				
+				tag.name = "方案"+(event.name+1);
+				tag.type = event.planttype;
+				tag.palytype = event.palytype;
+				tag.value = event.value;
+				
+				//刷新列表；
+				plan_group.removeAllElements();
+				for(var i:int;i<CurrentUserInfo.platTypeArrayList.length ;i++)
+				{
+					var item:view_plan_itemBase = new view_plan_itemBase();
+					item.isSlected = false;
+//					item.planName = CurrentUserInfo.platTypeArrayList[i].name;
+					item.planName = "方案" + (i+1).toString();
+					CurrentUserInfo.platTypeArrayList[i].name = item.planName;
+					item.planId = CurrentUserInfo.platTypeArrayList[i].type;
+					item.playType = CurrentUserInfo.platTypeArrayList[i].palytype;
+					item.id = "Id_" + i;
+					item.value = CurrentUserInfo.platTypeArrayList[i].value;
+					item.addEventListener(MouseEvent.CLICK,item_clickHandler);
+					
+					plan_group.addElement(item);
+				}
+				//默认选择之前的；
+				(plan_group.getElementAt(int(event.name)) as view_plan_itemBase).isSlected = true;
+				
+				mask_left.visible = false;
+				mask_left.includeInLayout = false;
+				
+				mask_right.visible = true;
+				mask_right.includeInLayout = true;
+			}
+			protected function forgoClickEventHandler(event:DynamicEvent):void
+			{
+				mask_left.visible = false;
+				mask_left.includeInLayout = false;
+				
+				mask_right.visible = true;
+				mask_right.includeInLayout = true;
+			}
+			
+			
+			
+			protected function changePlantEventHandler(event:DynamicEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+				trace("切换至：方案_"+(event.name)+"--value:" + (event.changePlantValue));
+				for(var i:int;i<plan_detail_group.numElements;i++){
+					this["plan_detail_"+(i+1)].visible = false;
+					this["plan_detail_"+(i+1)].includeInLayout = false;
+				}
+				
+				switch(event.changePlantValue)
+				{
+					case "101":
+						plan_detail_1.plantNum = event.plantNum;
+						plan_detail_1.init_view(1);
+						
+						plan_detail_1.visible = true;
+						plan_detail_1.includeInLayout = true;
+						break;
+					case "102":
+						plan_detail_2.plantNum = event.plantNum;
+						plan_detail_2.init_view(1);
+						
+						plan_detail_2.visible = true;
+						plan_detail_2.includeInLayout = true;
+						break;
+					case "103":
+						plan_detail_3.plantNum = event.plantNum;
+						plan_detail_3.init_view(1);
+						
+						plan_detail_3.visible = true;
+						plan_detail_3.includeInLayout = true;
+						break;
+					case "104":
+						plan_detail_4.plantNum = event.plantNum;
+						plan_detail_4.init_view(1);
+						
+						plan_detail_4.visible = true;
+						plan_detail_4.includeInLayout = true;
+						break;
+				}
+			}
+			
+			protected function edit_clickHandler(event:MouseEvent):void
+			{
+				mask_left.visible = true;
+				mask_left.includeInLayout = true;
+				
+				mask_right.visible = false;
+				mask_right.includeInLayout = false;
+			}
+			
+			//添加方案
+			protected function add_clickHandler(event:MouseEvent):void
+			{
+				//添加菜单的item;   给CurrentUserInfo.platTypeArrayList添加数据；
+				var obj:Object = new Object();//默认都添加随机出号的玩法并且五星直选单式；
+				obj.name = "方案" + int(CurrentUserInfo.platTypeArrayList.length+1).toString();
+				obj.type = "随机出号";
+				obj.value = "101";
+				obj.palytype = "直选单式【五星】";
+				CurrentUserInfo.platTypeArrayList.addItem(obj);
+				
+				//添加方案的item;   给CurrentUserInfo.plantDetailArrayList添加数据；
+				var plant_obj:Object = new Object();
+				plant_obj = {plantIndex:"1",plantType:0,
+					playType:0,playName:0,mode:0,moshi:1,result_isSelected:[1,1,1,1,1,1,1,1,1,1],touzhu_mode:0,
+					zhushu:1,zhushu_suiji:1,betContent:"1|2|3|4|5",showContent:"12345",
+					beishu:"1,2,4,8,16,32,64,128,256,512",
+					wanfa:"01_3"},//随机出号方案；默认都添加随机出号的玩法并且五星直选单式
+				CurrentUserInfo.plantDetailArrayList.addItem(plant_obj);
+				
+				//重新构造列表；
+				plan_group.removeAllElements();
+				var len:int = CurrentUserInfo.platTypeArrayList.length;
+				for(var i:int=0;i<len ;i++)
+				{
+					var item:view_plan_itemBase = new view_plan_itemBase();
+					item.isSlected = false;
+//					item.planName = CurrentUserInfo.platTypeArrayList[i].name;
+					item.planName = "方案" + (i+1).toString();
+					CurrentUserInfo.platTypeArrayList[i].name = item.planName;
+					item.planId = CurrentUserInfo.platTypeArrayList[i].type;
+					item.playType = CurrentUserInfo.platTypeArrayList[i].palytype;
+					item.id = "Id_" + i;
+					item.value = CurrentUserInfo.platTypeArrayList[i].value;
+					item.addEventListener(MouseEvent.CLICK,item_clickHandler);
+					plan_group.addElement(item);
+				}
+				//默认新加的item；
+				var tar_obj:Object = new Object();
+				tar_obj = (plan_group.getElementAt(len-1) as view_plan_itemBase);
+				tar_obj.isSlected = true;
+				//切换方案；
+				change_plant_view(tar_obj.id,tar_obj.value);
+			}
+			//删除方案
+			protected function delete_clickHandler(event:MouseEvent):void
+			{
+				var _index:int=-1;
+				for(var i:int=0;i<CurrentUserInfo.platTypeArrayList.length ;i++)
+				{
+					if((plan_group.getElementAt(i) as view_plan_itemBase).isSlected){
+						_index = i;//找到要删除的索引；
+						break;
+					}
+				}
+				if(_index < 0)return;
+				
+				var len:int;
+				//删除菜单的item;
+				CurrentUserInfo.platTypeArrayList.removeItemAt(_index);
+				//删除方案的item;
+				CurrentUserInfo.plantDetailArrayList.removeItemAt(_index);
+				//重新构造列表；
+				plan_group.removeAllElements();
+				len = CurrentUserInfo.platTypeArrayList.length;
+				
+				if(len < 1){//方案全部删除，显示空；
+					for(var i:int;i<plan_detail_group.numElements;i++){
+						this["plan_detail_"+(i+1)].visible = false;
+						this["plan_detail_"+(i+1)].includeInLayout = false;
+					}
+					return;
+				}
+				for(var i:int=0;i<len;i++)
+				{
+					var item:view_plan_itemBase = new view_plan_itemBase();
+					item.isSlected = false;
+//					item.planName = CurrentUserInfo.platTypeArrayList[i].name;
+					item.planName = "方案" + (i+1).toString();
+					CurrentUserInfo.platTypeArrayList[i].name = item.planName;
+					item.planId = CurrentUserInfo.platTypeArrayList[i].type;
+					item.playType = CurrentUserInfo.platTypeArrayList[i].palytype;
+					item.id = "Id_" + i;
+					item.value = CurrentUserInfo.platTypeArrayList[i].value;
+					item.addEventListener(MouseEvent.CLICK,item_clickHandler);
+					plan_group.addElement(item);
+				}
+				//默认新加的item；
+				var tar_obj:Object = new Object();
+				tar_obj = (plan_group.getElementAt(0) as view_plan_itemBase);
+				tar_obj.isSlected = true;
+				//切换方案；
+				change_plant_view(tar_obj.id,tar_obj.value);
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<s:HGroup  width="100%" height="600" left="5" right="5" top="5" bottom="5" gap="-1">
+		<!-- 设置、选择菜单-->
+		<s:BorderContainer width="450" height="100%"  borderColor="0x000000" borderWeight="1">
+			<s:VGroup width="100%" height="100%" left="5" right="5" top="5" bottom="5">
+				<s:BorderContainer width="100%" height="40"  borderColor="0x000000" borderWeight="1">
+					<s:HGroup height="100%" verticalAlign="middle" left="5" right="5" top="5" bottom="5">
+						<s:Button label="添加" click="add_clickHandler(event)"/>
+						<s:Button label="删除" click="delete_clickHandler(event)"/>
+						<s:Spacer y="14" width="191" height="0"/>
+						<s:Button label="编辑" click="edit_clickHandler(event)"/>
+					</s:HGroup>
+				</s:BorderContainer>
+				<s:BorderContainer width="100%" height="100%"  borderColor="0x000000" borderWeight="1">
+					<s:VGroup width="100%" height="100%"  left="5" right="5" top="5" bottom="5" gap="-1">
+						<s:BorderContainer width="100%" height="30"  borderColor="0x000000" borderWeight="1" backgroundColor="0x4682b4">
+							<s:HGroup  width="100%" height="100%" verticalAlign="middle" gap="0">
+								<s:HGroup  width="40" horizontalAlign="center">
+									<!--<s:CheckBox/>-->
+								</s:HGroup>
+								<s:Line xFrom="0" xTo="0" yFrom="-1" yTo="26">
+									<s:stroke>
+										<s:SolidColorStroke color="0x000000" weight="1" caps="square"/>
+									</s:stroke>
+								</s:Line>
+								<s:Label width="125" textAlign="center" text="方案" />
+								<s:Line xFrom="0" xTo="0" yFrom="-1" yTo="26">
+									<s:stroke>
+										<s:SolidColorStroke color="0x000000" weight="1" caps="square"/>
+									</s:stroke>
+								</s:Line>
+								<s:Label width="125" text="类别" textAlign="center" />
+								<s:Line xFrom="0" xTo="0" yFrom="-1" yTo="26">
+									<s:stroke>
+										<s:SolidColorStroke color="0x000000" weight="1" caps="square"/>
+									</s:stroke>
+								</s:Line>
+								<s:Label width="125" text="玩法" textAlign="center" />
+							</s:HGroup>
+						</s:BorderContainer>
+						
+						<s:VGroup width="100%" height="100%" id="plan_group" gap="-1">
+						</s:VGroup>
+						
+					</s:VGroup>
+				</s:BorderContainer>
+				
+			</s:VGroup>	
+		</s:BorderContainer>
+		<s:BorderContainer width="100%" height="100%"  borderColor="0x000000" borderWeight="1">
+			<s:VGroup width="100%" height="100%" verticalAlign="middle" id="plan_detail_group">
+				<plant:view_plan_detail_randomNumber id="plan_detail_1" submitClickEvent="submitClickEventHandler(event)"
+													 forgoClickEvent="forgoClickEventHandler(event)"
+								  				   changePlantEvent="changePlantEventHandler(event)"/>
+				<plant:view_plan_detail_open_X_bet_X id="plan_detail_2" submitClickEvent="submitClickEventHandler(event)" visible="false" includeInLayout="false"
+													 forgoClickEvent="forgoClickEventHandler(event)"
+													 changePlantEvent="changePlantEventHandler(event)"/>
+				<plant:view_plan_detail_hotAndcoldNumber id="plan_detail_3" submitClickEvent="submitClickEventHandler(event)" visible="false" includeInLayout="false"
+														 forgoClickEvent="forgoClickEventHandler(event)"
+														 changePlantEvent="changePlantEventHandler(event)"/>
+				<plant:view_plan_detail_codeNumber id="plan_detail_4" submitClickEvent="submitClickEventHandler(event)" visible="false" includeInLayout="false"
+												   forgoClickEvent="forgoClickEventHandler(event)" 
+												   changePlantEvent="changePlantEventHandler(event)"/>
+			</s:VGroup>	
+		</s:BorderContainer>
+	</s:HGroup>
+	
+	<s:Group  x="10" y="10" id="mask_left" visible="false" includeInLayout="false">
+		<s:Rect width="440" height="588">
+			<s:fill>
+				<s:SolidColor color="#4388d8" alpha="0.5"/>
+			</s:fill>
+		</s:Rect>
+	</s:Group>
+	<s:Group x="460" y="10" id="mask_right" visible="false" includeInLayout="false">
+		<s:Rect width="485" height="588" >
+			<s:fill>
+				<s:SolidColor color="#4388d8" alpha="0.5"/>
+			</s:fill>
+		</s:Rect>
+	</s:Group>
+	
+</mx:Canvas>

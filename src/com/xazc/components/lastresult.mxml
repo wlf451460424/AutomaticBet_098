@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:BorderContainer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="230" height="110" color="0xffffff"
+		 borderColor="0x000000" borderWeight="1" backgroundColor="0x5396ca"
+		 creationComplete="bordercontainer1_creationCompleteHandler(event)"
+		 >
+	<fx:Script>
+		<![CDATA[
+			import com.xazc.comm.ServerTool;
+			import com.xazc.comm.ServerToolImpl;
+			import com.xazc.event.CustomEvent;
+			import com.xazc.manager.TimerManager;
+			import com.xazc.single.CurrentBusinessInfo;
+			import com.xazc.single.CurrentUserInfo;
+			import com.xazc.single.Util;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			protected function bordercontainer1_creationCompleteHandler(event:FlexEvent):void
+			{
+				init();
+				getTheLastResult();//先自己取一次；
+//				getCurrLotteryIssue();//先自己取一次；
+			}
+			public function init():void
+			{
+				TimerManager.getInstance().addEventListener(CustomEvent.SPACE_8SECONDES, onTime);
+			}
+			private function onTime(e:CustomEvent):void
+			{
+				getTheLastResult();
+				if(CurrentUserInfo.isLogined)getCurrLotteryIssue();
+			}
+			/**
+			 * 查询上期开奖结果
+			 */	
+			public function getTheLastResult():void
+			{
+				//获取上一期期号,开奖结果;
+				var serverTool:ServerTool = new ServerToolImpl();
+				var obj:Object = new Object();
+				obj.reType = 1;
+				obj.CZID = CurrentUserInfo.lottreyID;
+				obj.IsSelf = false;
+				obj.Size = 50;
+				obj.Page = 0;
+				serverTool.getLastResult(obj,getTheLastResultReturn);
+			}
+			/**
+			 * 返回上期开奖内容 
+			 */
+			public function getTheLastResultReturn(e:ResultEvent):void
+			{
+				var arr:Object = Util.getInstance().resuleFormatToJSon(e.result.toString()); 
+				trace(e.result.toString());
+				if(arr == null || arr.length == 0)
+					return;
+				//判断是否以显示当前最新数据
+				if(lastIusseNum.text==arr[0].CzPeriod){
+					return;
+				}
+				lottreyName.text = CurrentUserInfo.lottreyName;
+				lastIusseNum.text = arr[0].CzPeriod;
+				CurrentUserInfo.Last_result = arr[0].CzNum;//保存上期开奖结果；
+				var resultArr:Array = (arr[0].CzNum).toString().split(",");
+				for(var i:int=0;i<resultArr.length;i++)
+				{
+					this["result_" +i].label = resultArr[i];
+				}
+			}
+			
+			[Bindable]
+			private var hh:String = "00";//小时
+			[Bindable]
+			private var mm:String = "00";//分钟
+			[Bindable]
+			private var ss:String = "00";//秒
+			[Bindable]
+			private var currentIssue:String = "";
+			
+			private var h:int;//时
+			private var m:int;//分
+			private var s:int;//秒
+			//当前投注时间差
+			public var gotime:int = 0;
+			/**
+			 * 查询当前期号 
+			 * 
+			 */
+			private function getCurrLotteryIssue():void
+			{
+				var serverTool:ServerTool = new ServerToolImpl();
+				var obj:Object = new Object();
+				obj.LotteryCodeEnum = CurrentUserInfo.lottreyID;
+				serverTool.getCurrLotteryIssue(obj,getCurrLotteryIssueReturn);
+			}
+			private function getCurrLotteryIssueReturn(e:ResultEvent):void
+			{
+				var arr:Object = JSON.parse(e.result.toString(),null);
+				trace(e.result.toString());
+				
+//				if(arr.SystemState==-1 || arr.SystemState==-2){
+//					Alert.show("请登录！", "温馨提示");
+//					return;
+//				}
+//				if(arr.SystemState==32){
+//					Alert.show("错误代码：0X:00000003QH，请联系客服", "温馨提示");
+//					TimerManager.getInstance().removeEventListener(TimerManager.CUSTOM_TIMER, ontime_2);
+//					return;
+//				}
+				if(arr.SystemState==64){
+					if(CurrentUserInfo.IssueNumber == null || CurrentUserInfo.IssueNumber != arr.IssueNumber)
+					{
+						CurrentUserInfo.IssueNumber= arr.IssueNumber;//保存期号
+						Util.getInstance().dispatchEvent(new CustomEvent(CustomEvent.ADDUSERNAME_MSSAGE));
+					}
+					
+					currentIssue = arr.IssueNumber;
+					gotime = Number(arr.SS)*1000;
+					count_down();
+				}
+			}
+			
+			protected function count_down():void
+			{
+				h=gotime/(60*60*1000);
+				m=(gotime-h*60*60*1000)/(60*1000);//分
+				s=(gotime -h*60*60*1000- m*60*1000)/1000;//秒
+				TimerManager.getInstance().addEventListener(TimerManager.CUSTOM_TIMER, ontime_2);
+			}
+			private function ontime_2(e:CustomEvent):void{
+				if(h>72){
+					hh = " > ";
+					mm = " 3 ";
+					ss = " 天 ";
+				}else{
+					if(h<10){hh="0"+h;}else{hh=""+h;}
+					if(m<10){mm="0"+m;}else{mm=""+m;}
+					if(s<10){ss="0"+s;}else{ss=""+s;}
+				}
+				
+				s -= 1;
+				if(s<0)
+				{
+					s=59;
+					m--;
+				}if(m<0)
+				{
+					m=59;
+					h--;
+				}
+				if(h<0)
+				{
+					TimerManager.getInstance().removeEventListener(TimerManager.CUSTOM_TIMER, ontime_2);
+					this.getCurrLotteryIssue();
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:VGroup width="100%" height="100%" gap="0">
+		<s:HGroup width="100%" height="30" verticalAlign="middle" horizontalAlign="center" gap="0">
+			<s:Label text="**乐透彩" id="lottreyName"/>
+			<s:Spacer width="5"/>
+			<s:Label text="第 " />
+			<s:Spacer width="3"/>
+			<s:Label text="" id="lastIusseNum"/>
+			<s:Spacer width="3"/>
+			<s:Label text="期 开奖号" />
+		</s:HGroup>
+		<s:HGroup width="100%" height="50" verticalAlign="middle" horizontalAlign="center" gap="10" color="0x000000">
+			<s:Button width="30" height="30" label="0" id="result_0"/>
+			<s:Button width="30" height="30" label="0" id="result_1"/>
+			<s:Button width="30" height="30" label="0" id="result_2"/>
+			<s:Button width="30" height="30" label="0" id="result_3"/>
+			<s:Button width="30" height="30" label="0" id="result_4"/>
+		</s:HGroup>
+		<s:HGroup width="100%" height="30" verticalAlign="middle" horizontalAlign="center" gap="0">
+			<s:Label text="距第" />
+			<s:Spacer width="3"/>
+			<s:Label text="{currentIssue}"/>
+			<s:Spacer width="3"/>
+			<s:Label text="期开奖 " />
+			<s:Spacer width="10"/>
+			<s:HGroup gap="0" color="0xffff00">
+				<s:Label text="{mm}"/>
+				<s:Label text=":"/>
+				<s:Label text="{ss}"/>
+			</s:HGroup>
+		</s:HGroup>
+	</s:VGroup>
+</s:BorderContainer>

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 creationComplete="init(event)"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="950" height="410"
+		 >
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<mx:DateFormatter id="df" formatString="YYYY-MM-DD JJ:NN:SS"/>
+		<mx:DateFormatter id="df1" formatString="YYYY-MM-DD"/>
+		<mx:DateFormatter id="df2" formatString="JJ:NN:SS"/>
+	</fx:Declarations>
+	<fx:Metadata>
+	</fx:Metadata>
+	<fx:Script>
+		<![CDATA[ 
+			import com.xazc.comm.ServerToolImpl;
+			import com.xazc.single.CurrentBusinessInfo;
+			import com.xazc.single.CurrentUserInfo;
+			
+			import mx.collections.ArrayCollection;
+			import mx.containers.Grid;
+			import mx.containers.GridItem;
+			import mx.containers.GridRow;
+			import mx.controls.Alert;
+			import mx.controls.Label;
+			import mx.controls.LinkButton;
+			import mx.core.FlexGlobals;
+			import mx.core.mx_internal;
+			import mx.events.CalendarLayoutChangeEvent;
+			import mx.events.DynamicEvent;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ObjectUtil;
+			
+			import spark.components.BorderContainer;
+			
+			//订单状态
+			private var titles:ArrayCollection=new ArrayCollection([
+				{title:"a",w:120},
+				{title:"h",w:100},
+				{title:"b",w:100},
+				{title:"i",w:60},
+				{title:"c",w:100},
+				{title:"d",w:100},
+				{title:"e",w:100},
+				{title:"f",w:100},
+				{title:"g",w:100}]);
+			private var models:ArrayCollection=new ArrayCollection([
+				{orderMask:"Time",width:120},
+				{orderMask:"LottreyName",width:100},
+				{orderMask:"IssueNumber",width:100},
+				{orderMask:"PlantName",width:60},
+				{orderMask:"PlayCode",width:100},
+				{orderMask:"BetContent",width:100},
+				{orderMask:"BetCount",width:100}, 
+				{orderMask:"BetMultiple",width:100},
+				{orderMask:"BetMoney",width:100}]);
+			
+			protected function init(event:FlexEvent):void
+			{
+//				for(var i:int=0;i<titles.length;i++){
+//					var lab:Label = new Label();
+//					lab.width = titles[i].w;
+//					lab.text = titles[i].title;
+//					lab.styleName = "personalCenterDetailLabelStyle_1_white";
+//					title_group.addElement(lab);
+//				}
+				
+				//初始化表头
+				var titleGrid:Grid=new Grid();
+				var titlerow:GridRow=new GridRow();
+				for(var i:int=0;i<titles.length;i++){
+					titlerow.height=30;
+					var gridItem:GridItem=new GridItem();
+					gridItem.width=titles.getItemAt(i).w;
+					var label:Label=new Label();
+					if(titles.getItemAt(i).title == "a"){
+						label.text = "投注时间";
+					}else if(titles.getItemAt(i).title == "h"){
+						label.text = "投注彩种";
+					}else if(titles.getItemAt(i).title == "b"){
+						label.text = "投注期号";
+					}else if(titles.getItemAt(i).title == "i"){
+						label.text = "方案";
+					}else if(titles.getItemAt(i).title == "c"){
+						label.text = "玩法类型";
+					}else if(titles.getItemAt(i).title == "d"){
+						label.text = "投注内容";
+					}else if(titles.getItemAt(i).title == "e"){
+						label.text = "注数";
+					}else if(titles.getItemAt(i).title == "f"){
+						label.text = "倍数";
+					}else if(titles.getItemAt(i).title == "g"){
+						label.text = "金额";
+					}
+					label.styleName="personalCenterDetailLabelStyle_1_white";
+					gridItem.addChild(label);
+					titlerow.addChild(gridItem);
+					titleGrid.addChild(titlerow);
+				}
+				title_group.addElementAt(titleGrid,0);
+				
+				
+				//初始化提示
+				var promptGrid:Grid=new Grid();
+				var promptRow:GridRow=new GridRow();
+				for(var j:int=0;j<models.length;j++){
+					promptRow.height=30;
+					var promptItem:GridItem=new GridItem();
+					promptItem.width=models.getItemAt(j).width;
+					
+					promptItem.horizontalScrollPolicy = "ScrollPolicy.OFF" ;
+					var label1:Label=new Label();
+					label1.width = models[j].width;
+					label1.text="";
+					label1.styleName="personalCenterDetailLabelStyle_1"; 
+					promptItem.addChild(label1);
+					promptRow.addChild(promptItem);
+					promptGrid.addChild(promptRow);
+				}
+				promptGrid.visible = false;
+				list_group.addElementAt(promptGrid,0);
+			}
+			
+			public function updateViewPropertysValue(list:ArrayCollection):void
+			{
+				if(list == null)return;
+				
+				var grid:Grid=list_group.getChildAt(0) as Grid;//取出显示内容的grid
+				grid.removeAllChildren();//清空所有子项
+				grid.visible = true;
+				grid.setStyle("backgroundColor","#9ec9fb");
+				for(var i:int=0;i<list.length;i++){
+					var row:GridRow=new GridRow();
+					row.height=30;
+					grid.addChild(row);
+					for(var j:int=0;j<models.length;j++){
+						var item:GridItem=new GridItem();
+						item.horizontalScrollPolicy = "ScrollPolicy.OFF" ;
+						row.addChild(item);
+						item.width=models.getItemAt(j).width;
+						var lb:Label=new Label();
+						lb.styleName="personalCenterDetailLabelStyle_1";
+						lb.width=models.getItemAt(j).w-5;
+						item.addChild(lb);
+						var strColumn:String=models.getItemAt(j).orderMask;
+//						lb.text = list[i][strColumn];
+//						lb.toolTip = lb.text;
+						
+						if(strColumn == "PlayCode"){
+							var arr:ArrayCollection = CurrentUserInfo.playName;
+							for(var n:int=0;n<arr.length;n++){
+								if(list[i][strColumn]== arr[n].value){
+									lb.text = arr[n].type;
+									lb.toolTip = lb.text;
+								}
+							}
+//						}else if(strColumn == "BetContent"){
+//							lb.text = "详细请点击";
+//							lb.name = list[i][strColumn];
+//							lb.setStyle("color","0xff0000");
+//							lb.addEventListener(MouseEvent.CLICK,detail_Handler);
+						}else{
+							lb.text = list[i][strColumn];
+							lb.toolTip = lb.text;
+						}
+					}
+				}
+			}
+			
+			private function detail_Handler (event:MouseEvent):void
+			{
+				var str:String = (event.currentTarget as Label).name;
+				Alert.show(str, "投注内容");
+			}
+			
+		]]>
+	</fx:Script>
+	<s:Group width="945" height="100%">
+		<s:Rect id="fill" width="100%" height="30">
+			<s:fill>
+				<s:LinearGradient >
+					<s:GradientEntry color="#4682b4" alpha="1"/>
+				</s:LinearGradient>
+			</s:fill>
+		</s:Rect>
+		
+		<!--详细内容-->
+		<s:VGroup gap="0" width="100%" height="100%" id="vg" >
+			<s:HGroup id="title_group" gap="1" height="30" verticalAlign="middle"/>
+			
+			<s:Scroller width="100%" height="380" horizontalScrollPolicy="off" id="scroll">
+				<s:VGroup id="list_group" gap="1" verticalScrollPosition="100" horizontalScrollPosition="100"/>
+			</s:Scroller>
+		</s:VGroup>
+	</s:Group>
+</s:Group>

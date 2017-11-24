@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx"
+					   xmlns:components="com.xazc.components.*"
+					   width="1200" height="800" 
+					   creationComplete="init(event)"
+					   >
+	<!-- 加载样式 -->
+	<fx:Style source="css/popUpPersonal.css"/>
+	<fx:Script>
+		<![CDATA[
+			import com.xazc.manager.TimerManager;
+			
+			import mx.events.FlexEvent;
+			
+			protected function init(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				TimerManager.getInstance().start();
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	
+	<s:HGroup width="100%" height="100%" gap="-1">
+		<s:VGroup width="230" height="100%">
+			<components:lastresult/>
+			<components:login/>
+			<components:resultList/>
+		</s:VGroup>
+		<s:VGroup width="970" height="100%">
+			<s:Image source="css/img/banner.png"/>
+			<components:content />
+		</s:VGroup>
+	</s:HGroup>
+	
+	
+</s:WindowedApplication>

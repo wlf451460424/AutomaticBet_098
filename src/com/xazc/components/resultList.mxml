@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:BorderContainer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="230" height="409" color="0xffffff"
+		 borderColor="0x000000" borderWeight="1"
+		 creationComplete="bordercontainer1_creationCompleteHandler(event)"
+		 >
+	<fx:Script>
+		<![CDATA[
+			import com.xazc.comm.ServerTool;
+			import com.xazc.comm.ServerToolImpl;
+			import com.xazc.event.CustomEvent;
+			import com.xazc.manager.TimerManager;
+			import com.xazc.single.CurrentUserInfo;
+			import com.xazc.single.Util;
+			
+			import mx.collections.ArrayCollection;
+			import mx.containers.Grid;
+			import mx.containers.GridItem;
+			import mx.containers.GridRow;
+			import mx.controls.Label;
+			import mx.events.FlexEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			//订单状态
+			private var titles:ArrayCollection=new ArrayCollection([
+				{title:"a",w:114},
+				{title:"b",w:114}]);
+			private var models:ArrayCollection=new ArrayCollection([
+				{orderMask:"CzPeriod",width:114},
+				{orderMask:"CzNum",width:114}]);
+			
+			protected function bordercontainer1_creationCompleteHandler(event:FlexEvent):void
+			{
+				//初始化表头
+				var titleGrid:Grid=new Grid();
+				var titlerow:GridRow=new GridRow();
+				for(var i:int=0;i<titles.length;i++){
+					titlerow.height=30;
+					var gridItem:GridItem=new GridItem();
+					gridItem.width=titles.getItemAt(i).w;
+					var label:Label=new Label();
+					if(titles.getItemAt(i).title == "a"){
+						label.text = "开奖期号";
+					}else if(titles.getItemAt(i).title == "b"){
+						label.text = "开奖号码";
+					}
+					label.styleName="personalCenterDetailLabelStyle_1_white";
+					gridItem.addChild(label);
+					titlerow.addChild(gridItem);
+					titleGrid.addChild(titlerow);
+				}
+				title_group.addElementAt(titleGrid,0);
+				
+				//初始化提示
+				var promptGrid:Grid=new Grid();
+				var promptRow:GridRow=new GridRow();
+				for(var j:int=0;j<models.length;j++){
+					promptRow.height=30;
+					var promptItem:GridItem=new GridItem();
+					promptItem.width=models.getItemAt(j).width;
+					
+					promptItem.horizontalScrollPolicy = "ScrollPolicy.OFF" ;
+					var label1:Label=new Label();
+					label1.width = models[j].width;
+					label1.text="";
+					label1.styleName="personalCenterDetailLabelStyle_1"; 
+					promptItem.addChild(label1);
+					promptRow.addChild(promptItem);
+					promptGrid.addChild(promptRow);
+				}
+				promptGrid.visible = false;
+				list_group.addElementAt(promptGrid,0);
+				
+				getTheLastResult();
+				TimerManager.getInstance().addEventListener(CustomEvent.SPACE_8SECONDES, onTime);
+			}
+			private function onTime(e:CustomEvent):void
+			{
+				getTheLastResult();
+			}
+			/**
+			 * 查询上期开奖结果
+			 */	
+			public function getTheLastResult():void
+			{
+				//获取上一期期号,开奖结果;
+				var serverTool:ServerTool = new ServerToolImpl();
+				var obj:Object = new Object();
+				obj.reType = 1;
+				obj.CZID = CurrentUserInfo.lottreyID;
+				obj.IsSelf = false;
+				obj.Size = 100;
+				obj.Page = 0;
+				serverTool.getLastResult(obj,getTheLastResultReturn);
+			}
+			/**
+			 * 返回上期开奖内容 
+			 */
+			public function getTheLastResultReturn(e:ResultEvent):void
+			{
+				var arr:Object = Util.getInstance().resuleFormatToJSon(e.result.toString()); 
+//				var arr:Object = JSON.parse(e.result.toString(),null);
+				trace(e.result.toString());
+				if(arr == null || arr.length == 0)
+					return;
+				updateViewPropertysValue(arr);
+				
+				//保存数据；
+				CurrentUserInfo.histroyResult_List = new Array();
+				for(var i:int=0;i<arr.length;i++){
+					var str:String = arr[i].CzNum;
+					var obj:Object = str.split(",");
+					CurrentUserInfo.histroyResult_List.push(obj);
+				}
+				
+				
+			}
+			
+			public function updateViewPropertysValue(list:Object):void
+			{
+				if(list == null)return;
+				
+				var grid:Grid=list_group.getChildAt(0) as Grid;//取出显示内容的grid
+				grid.removeAllChildren();//清空所有子项
+				grid.visible = true;
+				grid.setStyle("backgroundColor","#9ec9fb");
+				for(var i:int=0;i<list.length;i++){
+					var row:GridRow=new GridRow();
+					row.height=30;
+					grid.addChild(row);
+					for(var j:int=0;j<models.length;j++){
+						var item:GridItem=new GridItem();
+						item.horizontalScrollPolicy = "ScrollPolicy.OFF" ;
+						row.addChild(item);
+						item.width=models.getItemAt(j).width;
+						var lb:Label=new Label();
+						lb.styleName="personalCenterDetailLabelStyle_1";
+						lb.width=models.getItemAt(j).w-5;
+						item.addChild(lb);
+						var strColumn:String=models.getItemAt(j).orderMask;
+						lb.text = list[i][strColumn];
+					}
+				}
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<s:Group width="100%" height="100%">
+		<s:Rect id="fill" width="100%" height="30">
+			<s:fill>
+				<s:LinearGradient >
+					<s:GradientEntry color="#4682b4" alpha="1"/>
+				</s:LinearGradient>
+			</s:fill>
+		</s:Rect>
+		
+		<s:VGroup gap="-1" width="100%" height="100%" id="vg" >
+			<s:HGroup id="title_group" gap="1" height="30" verticalAlign="middle"/>
+			
+			<s:Scroller width="100%" height="100%" horizontalScrollPolicy="off" id="scroll">
+				<s:VGroup id="list_group" gap="1" />
+			</s:Scroller>
+		</s:VGroup>
+	</s:Group>
+	
+</s:BorderContainer>

@@ -1,0 +1,14 @@
+<books>                      
+    <book name="flex tutorial">                  
+        <price>30</price>              
+        <author>adobe</author>             
+    </book>                  
+    <book name="air tutorial">                   
+        <price>40</price>              
+        <author>adobe</author>             
+    </book>                  
+    <book name="java tutorial">                  
+        <price>50</price>              
+        <author>sun</author>               
+    </book>                  
+</books>

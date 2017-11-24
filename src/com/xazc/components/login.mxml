@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:BorderContainer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="230" height="270"
+		 borderColor="0x000000" borderWeight="1" backgroundColor="#9ec9fb"
+		 creationComplete="init(event)"
+		 >
+	
+	<fx:Script>
+		<![CDATA[
+			import com.xazc.comm.ServerTool;
+			import com.xazc.comm.ServerToolImpl;
+			import com.xazc.single.CurrentBusinessInfo;
+			import com.xazc.single.CurrentUserInfo;
+			import com.xazc.single.Util;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			import spark.events.IndexChangeEvent;
+			private var alert:Alert = new Alert;
+			
+			[Bindable]
+			public var userShare:SharedObject = null;  
+			
+			protected function init(event:FlexEvent):void
+			{
+				userShare = SharedObject.getLocal("myUser","/");  
+				username.text = userShare.data.userName;  
+				password.text = userShare.data.password;  
+				
+				CurrentUserInfo.lottreyName = CurrentBusinessInfo.lottreyArrayList[lotrreyName.selectedIndex].name;
+				CurrentUserInfo.lottreyID = CurrentBusinessInfo.lottreyArrayList[lotrreyName.selectedIndex].value;
+			}
+			
+			protected function login_clickHandler(event:MouseEvent):void
+			{
+				if(""==username.text){
+					Alert.show("请填用户名！", "温馨提示");
+					return;
+				}
+				if(""==password.text){
+					Alert.show("请填写密码！", "温馨提示");
+					return;
+				}
+				var serverTool:ServerTool = new ServerToolImpl();
+				var obj:Object = new Object();
+				obj.UserLoginName = username.text;
+				obj.UserPassWord = password.text;
+				obj.SecCode = '58324';
+				serverTool.userLogin(obj,loginReturn);
+			}
+			private function loginReturn(e:ResultEvent):void
+			{
+				var arr:Object = Util.getInstance().resuleFormatToJSon(e.result.toString(),1); 
+				if(arr.LoginState){
+					
+					CurrentUserInfo.isLogined = true;
+					CurrentUserInfo.MyRebate = arr.UserDetail.MyRebate;
+					
+					//保存在本地；
+//					userShare.clear();//每次先把上次的清空  
+					userShare.data.userName = username.text;  
+					userShare.data.password = password.text;  
+					userShare.flush(1000);//参数为为本地shareObject开辟了1000个字节 
+					
+					//（查询余额接口）
+					var serverTool:ServerTool = new ServerToolImpl();
+					var obj:Object = new Object();
+					serverTool.getUserAllMoney(obj,getUserAllMoneyReturn);
+				}else{
+					if(arr.ErrorCode==1){
+						Alert.show("验证码错误，请重新输入！", "温馨提示");
+						
+					}else if(arr.ErrorCode==2){
+						Alert.show("您输入的用户名或密码有误，请重新输入！", "温馨提示");
+						
+					}else if(arr.ErrorCode==3){
+						Alert.show("您的账户被锁定！", "温馨提示");
+						
+					}else if(arr.ErrorCode==4){
+						Alert.show("您的账号被限制登录！", "温馨提示");
+						
+					}else if(arr.ErrorCode==5){
+						Alert.show("您的账号被限制登录！", "温馨提示");
+						
+					}else if(arr.ErrorCode==6){
+						Alert.show("您的账号被冻结！", "温馨提示");
+						
+					}else{
+						Alert.show("登录异常！", "温馨提示");
+					}
+				}
+			}
+			private function getUserAllMoneyReturn(e:ResultEvent):void
+			{
+				var arr:Object = Util.getInstance().resuleFormatToJSon(e.result.toString(),1);
+				if(arr.state){
+					//查询余额成功
+					CurrentUserInfo.userName = arr.userName;
+					CurrentUserInfo.userCPBalance = arr.lotteryMoney;
+					CurrentUserInfo.userCPLockedBalance = arr.freezeMoney;
+					
+					login_group.visible = false;
+					login_group.includeInLayout = false;
+					username.text = "";
+					password.text = "";
+					
+					info_group.visible = true;
+					info_group.includeInLayout = true;
+					info_name.text = CurrentUserInfo.userName;
+					info_money.text = CurrentUserInfo.userCPBalance;
+				}
+			}
+			
+			protected function lotrreyName_changeHandler(event:IndexChangeEvent):void
+			{
+				CurrentUserInfo.lottreyName = CurrentBusinessInfo.lottreyArrayList[lotrreyName.selectedIndex].name;
+				CurrentUserInfo.lottreyID = CurrentBusinessInfo.lottreyArrayList[lotrreyName.selectedIndex].value;
+			}
+			
+			protected function exit_clickHandler(event:MouseEvent):void
+			{
+				var serverTool:ServerTool = new ServerToolImpl();
+				var obj:Object = new Object();
+				obj.LoginType = 1;
+				serverTool.userLoginExit(obj,userLoginReturn); 
+			}
+			private function userLoginReturn(e:ResultEvent):void
+			{
+				CurrentUserInfo.userName = "";
+				var arr:Object = Util.getInstance().resuleFormatToJSon(e.result.toString(),1); 
+				if(arr.SystemState==64)
+				{
+					login_group.visible = true;
+					login_group.includeInLayout = true;
+					
+					info_group.visible = false;
+					info_group.includeInLayout = false;
+					
+					userShare = SharedObject.getLocal("myUser","/");  
+					username.text = userShare.data.userName;  
+					password.text = userShare.data.password;  
+					
+				}else{
+					Alert.show("登出失败！！");
+				}
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:VGroup width="100%" height="100%">
+		<s:VGroup width="100%" height="100%" visible="true" includeInLayout="true" id="login_group">
+			<s:VGroup width="100%" height="210" horizontalAlign="center" gap="0">
+				<s:Label text="选择平台:" width="200" height="30" verticalAlign="middle" textAlign="left"/>
+				<s:ComboBox width="200" id="platName" initialize="platName.textInput.editable = false"
+							dataProvider="{CurrentBusinessInfo.platArrayList}" selectedIndex="0" labelField="type"/>
+				<s:Label text="投注彩种:" width="200" height="30" verticalAlign="middle"  textAlign="left"/>
+				<s:ComboBox width="200" id="lotrreyName" initialize="lotrreyName.textInput.editable = false" change="lotrreyName_changeHandler(event)"
+							dataProvider="{CurrentBusinessInfo.lottreyArrayList}" selectedIndex="0" labelField="name"/>
+				<s:Label text="账号:" width="200" height="30" verticalAlign="middle"  textAlign="left"/>
+				<s:TextInput width="200" id="username" text=""/>
+				<s:Label text="密码:" width="200" height="30" verticalAlign="middle"  textAlign="left"/>
+				<s:TextInput width="200" id="password" text="" displayAsPassword="true"/>
+			</s:VGroup>
+			<s:HGroup width="100%" height="50" horizontalAlign="center" verticalAlign="middle">
+				<s:Button label="用户登录" click="login_clickHandler(event)"/>
+			</s:HGroup>
+		</s:VGroup>
+		
+		<s:VGroup width="100%" height="100%" visible="false" includeInLayout="false" horizontalAlign="center" gap="0" id="info_group">
+			<s:HGroup width="200" height="30" verticalAlign="middle" textAlign="left">
+				<s:Label text="投注期数：" />
+				<s:Label text="{CurrentUserInfo.IssueNumber}" id="info_iusse"/>
+			</s:HGroup>
+			<s:HGroup width="200" height="30" verticalAlign="middle" textAlign="left">
+				<s:Label text="会员账号：" />
+				<s:Label text="" id="info_name"/>
+			</s:HGroup>
+			<s:HGroup width="200" height="30" verticalAlign="middle" textAlign="left">
+				<s:Label text="账号余额：" />
+				<s:Label text="0.00" id="info_money"/>
+			</s:HGroup>
+			<s:HGroup width="200" height="90" verticalAlign="middle" textAlign="left">
+				<s:Label text="止损盈亏：" />
+				<s:VGroup gap="10">
+					<s:HGroup height="30" verticalAlign="middle">
+						<s:Label text="盈利大于-" />
+						<s:TextInput width="76" maxChars="8" restrict="0-9" text="5000"/>
+					</s:HGroup>
+					<s:HGroup height="30" verticalAlign="middle">
+						<s:Label text="亏损大于-" />
+						<s:TextInput width="75" maxChars="8" restrict="0-9" text="5000"/>
+					</s:HGroup>
+				</s:VGroup>
+			</s:HGroup>
+			<s:Spacer height="40" />
+			<s:HGroup width="100%" height="50" horizontalAlign="center" verticalAlign="middle">
+				<s:Button label="刷      新" />
+				<s:Button label="退出登录" click="exit_clickHandler(event)"/>
+			</s:HGroup>
+			
+		</s:VGroup>
+		
+	</s:VGroup>
+</s:BorderContainer>

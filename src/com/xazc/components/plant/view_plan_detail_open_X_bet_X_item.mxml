@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="279" height="30" creationComplete="group1_creationCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			private var _result_num:int;
+			
+			private var _positive_num:String = new String();
+			private var _counter_num:String = new String();
+			
+			private var _isSlected:Boolean;
+			
+			[Bindable]
+			public function get isSlected():Boolean
+			{
+				return _isSlected;
+			}
+
+			public function set isSlected(value:Boolean):void
+			{
+				_isSlected = value;
+			}
+
+			[Bindable]
+			public function get counter_num():String
+			{
+				return _counter_num;
+			}
+
+			public function set counter_num(value:String):void
+			{
+				_counter_num = value;
+			}
+
+			[Bindable]
+			public function get positive_num():String
+			{
+				return _positive_num;
+			}
+
+			public function set positive_num(value:String):void
+			{
+				_positive_num = value;
+			}
+			
+			public function setResult_num(value:int):void
+			{
+				_result_num = value;
+				
+				//正投；
+				var start_num:int = _result_num;
+				for(var i:int=0;i<5;i++){
+					
+					if(start_num == 10)start_num=0;
+					
+					if(i == 4){
+						positive_num += start_num;
+					}
+					else{
+						positive_num += start_num + ",";
+					}
+					start_num++;
+				}
+				
+				//反投；
+				var start_num_1:int = _result_num;
+				for(var i:int=0;i<5;i++){
+					
+					if(start_num_1==-1)start_num_1=9;
+					
+					if(i == 4){
+						counter_num += start_num_1;
+					}
+					else{
+						counter_num += start_num_1 + ",";
+					}
+					start_num_1--;
+				}
+			}
+
+			protected function group1_creationCompleteHandler(event:FlexEvent):void
+			{
+				
+			}
+			
+			
+			
+			
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<s:BorderContainer width="100%" height="100%"  borderColor="0x000000" borderWeight="1" backgroundColor="0xFFFFFF" borderAlpha="1" >
+		<s:HGroup  width="100%" height="30" verticalAlign="middle" gap="0">
+			<s:HGroup  width="21" horizontalAlign="center">
+				<s:CheckBox selected="{isSlected}" id="is_selected"/>
+			</s:HGroup>
+			<s:Line xFrom="0" xTo="0" yFrom="-1" yTo="26">
+				<s:stroke>
+					<s:SolidColorStroke color="0x000000" weight="1" caps="square"/>
+				</s:stroke>
+			</s:Line>
+			<!--开出号码-->
+			<s:Label width="85" textAlign="center" text="{_result_num.toString()}"/>
+			<s:Line xFrom="0" xTo="0" yFrom="-1" yTo="26">
+				<s:stroke>
+					<s:SolidColorStroke color="0x000000" weight="1" caps="square"/>
+				</s:stroke>
+			</s:Line>
+			<!--正投号码-->
+			<s:Label width="85" text="{_positive_num}" textAlign="center"/>
+			<s:Line xFrom="0" xTo="0" yFrom="-1" yTo="26">
+				<s:stroke>
+					<s:SolidColorStroke color="0x000000" weight="1" caps="square"/>
+				</s:stroke>
+			</s:Line>
+			<!--反投号码-->
+			<s:Label width="85" text="{_counter_num}" textAlign="center"/>
+		</s:HGroup>
+	</s:BorderContainer>
+</s:Group>

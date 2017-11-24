@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="425" height="30" creationComplete="group1_creationCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			[Bindable]
+			private var _isSlected:Boolean;
+			private var _planName:String;
+			private var _planId:String;
+			private var _playType:String;
+			
+			[Bindable]
+			private var _bg_color:uint=0xFFFFFF; // 0x9ec9fb
+			
+			private var _value:String;
+			
+			[Bindable]
+			public function get value():String
+			{
+				return _value;
+			}
+
+			public function set value(value:String):void
+			{
+				_value = value;
+			}
+
+
+			public function bg_color(value:uint):void
+			{
+				_bg_color = value;
+			}
+
+			[Bindable]
+			public function get playType():String
+			{
+				return _playType;
+			}
+
+			public function set playType(value:String):void
+			{
+				_playType = value;
+			}
+
+			[Bindable]
+			public function get planId():String
+			{
+				return _planId;
+			}
+
+			public function set planId(value:String):void
+			{
+				_planId = value;
+			}
+
+			[Bindable]
+			public function get isSlected():Boolean
+			{
+				return _isSlected;
+			}
+
+			public function set isSlected(value:Boolean):void
+			{
+				_isSlected = value;
+				
+				if(_isSlected)bg_color(0x9ec9fb);
+				else bg_color(0xFFFFFF);
+				
+			}
+
+			[Bindable]
+			public function get planName():String
+			{
+				return _planName;
+			}
+
+			public function set planName(value:String):void
+			{
+				_planName = value;
+			}
+
+			protected function group1_creationCompleteHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				
+			}
+			
+			
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+		<s:BorderContainer width="100%" height="100%"  borderColor="0x000000" borderWeight="1" backgroundColor="{_bg_color}">
+			<s:HGroup  width="100%" height="30" verticalAlign="middle" gap="0">
+				<s:HGroup  width="40" horizontalAlign="center">
+					<s:CheckBox selected="{_isSlected}" mouseChildren="false" mouseEnabled="false"/>
+				</s:HGroup>
+				<s:Line xFrom="0" xTo="0" yFrom="-1" yTo="26">
+					<s:stroke>
+						<s:SolidColorStroke color="0x000000" weight="1" caps="square"/>
+					</s:stroke>
+				</s:Line>
+				<s:Label width="125" textAlign="center" text="{_planName}"/>
+				<s:Line xFrom="0" xTo="0" yFrom="-1" yTo="26">
+					<s:stroke>
+						<s:SolidColorStroke color="0x000000" weight="1" caps="square"/>
+					</s:stroke>
+				</s:Line>
+				<s:Label width="125" text="{_planId}" textAlign="center"/>
+				<s:Line xFrom="0" xTo="0" yFrom="-1" yTo="26">
+					<s:stroke>
+						<s:SolidColorStroke color="0x000000" weight="1" caps="square"/>
+					</s:stroke>
+				</s:Line>
+				<s:Label width="125" text="{_playType}" textAlign="center"/>
+			</s:HGroup>
+		</s:BorderContainer>
+</s:Group>

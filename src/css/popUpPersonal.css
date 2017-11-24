@@ -1,0 +1,69 @@
+/* CSS file */
+@namespace s "library://ns.adobe.com/flex/spark";
+@namespace mx "library://ns.adobe.com/flex/mx";
+
+mx|Grid
+{
+	borderStyle: solid;
+	horizontalGap:-1;
+	verticalGap:-1;
+	paddingLeft:-1;
+	paddingTop:-1;
+	paddingRight:-1;
+	paddingBottom:-1;
+/*	backgroundColor:#9ec9fb;*/
+	
+}
+
+mx|GridItem{
+	borderStyle: solid;
+	horizontalAlign: center;
+	verticalAlign: middle;
+	paddingTop:-1;
+	paddingBottom:-1;
+}
+
+/* 个人中心   表头的白色字体*/
+mx|Label.personalCenterDetailLabelStyle_1_white
+{
+	fontSize:12;
+	/*color:#768a99;*/
+	color:#ffffff;
+	fontFamily:'Microsoft YaHei,微软雅黑';
+	textAlign:center;
+}
+s|Label.personalCenterDetailLabelStyle_1_white
+{
+	fontSize:12;
+	/*color:#768a99;*/
+	color:#ffffff;
+	fontFamily:'Microsoft YaHei,微软雅黑';
+	textAlign:center;
+}
+mx|Label.personalCenterDetailLabelStyle_1
+{
+	fontSize:12;
+	/*color:#768a99;*/
+	color:#666666;
+	fontFamily:'Microsoft YaHei,微软雅黑';
+	textAlign:center;
+}
+s|Label.personalCenterDetailLabelStyle_1
+{
+	fontSize:12;
+	/*color:#768a99;*/
+	color:#666666;
+	fontFamily:'Microsoft YaHei,微软雅黑';
+	textAlign:center;
+}
+/*-列表     头样式 加黑边*/
+mx|GridItem.RecordsGridItemStyle_borderBlack{
+	horizontalAlign: center;
+	verticalAlign: middle;
+	paddingTop:0;
+	paddingBottom:0;
+	
+	fontFamily:'Microsoft YaHei,微软雅黑';
+	borderColor:#fa0012;
+	backgroundColor:#999999;
+}

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:BorderContainer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="970" height="685"
+		 borderColor="0x000000" borderWeight="1" xmlns:components="com.xazc.components.*"
+		 >
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			protected function item_clickHandler(event:MouseEvent):void
+			{
+				var str:String = (event.currentTarget as Button).id;
+				switch(str)
+				{
+					case "item_1":
+					case "item_2":
+					case "item_3":
+						bg2Module.selectedIndex = int( str.split("_")[1] - 1  );
+						break;
+					case "item_4":
+					case "item_5":
+					case "item_6":
+						Alert.show("敬请期待！", "温馨提示");
+						break;
+				}
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	
+	<s:VGroup width="100%" height="100%" left="5" right="5" top="5" bottom="5">
+		<s:BorderContainer width="100%" height="35"  borderColor="0x000000" borderWeight="1">
+			<s:HGroup width="100%" height="100%" verticalAlign="middle" left="5">
+				<s:Button label="1.官方地址" id="item_1" click="item_clickHandler(event)"/>
+				<s:Button label="2.自动投注" id="item_2" click="item_clickHandler(event)"/>
+				<s:Button label="3.方案设定" id="item_3" click="item_clickHandler(event)"/>
+				<!--<s:Button label="4.参考数据" id="item_4" click="item_clickHandler(event)"/>
+				<s:Button label="5.历史统计" id="item_5" click="item_clickHandler(event)"/>
+				<s:Button label="6.软件设置" id="item_6" click="item_clickHandler(event)"/>-->
+			</s:HGroup>	
+		</s:BorderContainer>
+		<s:BorderContainer width="100%" height="100%"  borderColor="0x000000" borderWeight="1">
+			<mx:ViewStack id="bg2Module" width="100%" creationPolicy="all"  resizeToContent="true">
+				<!-- 官网地址-->
+				<components:view_addres />
+				<!-- 自动投注-->
+				<components:view_bet />
+				<!-- 方案设定-->
+				<components:view_plan />
+			</mx:ViewStack>
+		</s:BorderContainer>
+	</s:VGroup>
+	
+</s:BorderContainer>
